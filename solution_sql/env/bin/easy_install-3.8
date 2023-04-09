@@ -1,0 +1,10 @@
+#!/bin/sh
+'''exec' "/Users/alexbrodsky/Documents/OneDrive - George Mason University - O365 Production/aaa_python_code/cs_450_550_db_project_mysql_2022_solution/solution_sql/env/bin/python3" "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+from setuptools.command.easy_install import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())

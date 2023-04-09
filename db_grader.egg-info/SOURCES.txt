@@ -1,0 +1,6 @@
+setup.py
+db_grader.egg-info/PKG-INFO
+db_grader.egg-info/SOURCES.txt
+db_grader.egg-info/dependency_links.txt
+db_grader.egg-info/requires.txt
+db_grader.egg-info/top_level.txt

@@ -1,0 +1,17 @@
+{
+  "views": [
+    "shippedVsCustDemand",
+    "totalManufItems",
+    "matsUsedVsShipped",
+    "producedVsShipped",
+    "suppliedVsShipped",
+    "perSupplierCost",
+    "perManufCost",
+    "perShipperCost",
+    "totalCostBreakDown",
+    "customersWithUnsatisfiedDemand",
+    "suppliersWithUnsentOrders",
+    "manufsWoutEnoughMats",
+    "manufsWithUnsentOrders"
+  ]
+}
