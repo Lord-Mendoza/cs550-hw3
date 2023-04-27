@@ -112,9 +112,13 @@ ORDER by m.manuf;
 
 -- Query 13
 create view manufsWithUnsentOrders as
-select m.manuf as manuf
-from manufOrders m
-where m.item not in (select item
-                     from shipOrders s
-                     where m.manuf = s.recipient)
-ORDER BY m.manuf;
+select distinct m.manuf
+from manufOrders m,
+     (select m1.manuf, m1.item, IFNULL(sum(s.qty), 0) as sentQty
+      from manufOrders m1
+               left join shipOrders s on s.sender = m1.manuf and m1.item = s.item
+      group by m1.manuf, m1.item) temp
+where m.manuf = temp.manuf
+  and m.item = temp.item
+  and m.qty > temp.sentQty
+order by m.manuf;

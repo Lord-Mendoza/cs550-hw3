@@ -5,6 +5,7 @@
     "matsUsedVsShipped",
     "producedVsShipped",
     "suppliedVsShipped",
-    "suppliersWithUnsentOrders"
+    "suppliersWithUnsentOrders",
+    "manufsWithUnsentOrders"
   ]
 }
