@@ -50,11 +50,34 @@ order by s.item, s.supplier;
 # 		;
 
 
--- Query 7
-# create view perManufCost as
-# 	select	__ as manuf, __ as cost
-# 	from
-# 		;
+-- Query 7: DONEEE
+create view totalManufacturingCostPerManufacturer as
+select o.manuf,
+       # 'manufacturer base cost = setUpCost + prodPricePerUnit time qty of produced prodItem'
+       IFNULL(sum(u.setUpCost + (u.prodCostPerUnit * o.qty)), 0) as manufacturingCost
+from manufOrders o,
+     manufUnitPricing u
+where o.item = u.prodItem
+  and o.manuf = u.manuf
+group by o.manuf;
+
+create view perManufCost as
+select d.manuf,
+       IFNULL(
+           case
+                #discounted -- base manufacturingCost + discountedManufacturingCost
+                when t.manufacturingCost > d.amt1 then
+                    ((t.manufacturingCost - d.amt1)      #'manufacturing cost excess of amt1'
+                    * (1 - d.disc1))                     #discounted manufacturing cost
+                    + d.amt1                             #add non-discounted cost for total
+
+               #not discounted
+               when t.manufacturingCost < d.amt1 then t.manufacturingCost
+           end
+       , 0) as cost
+from totalManufacturingCostPerManufacturer t
+         right join manufDiscounts d on d.manuf = t.manuf
+order by d.manuf;
 
 
 -- Query 8
