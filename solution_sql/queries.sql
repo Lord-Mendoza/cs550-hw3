@@ -1,4 +1,4 @@
--- Query 1
+-- Query 1: Done
 create view shippedVSCustDemand as
 select c.customer as customer, c.item as item, sum(IFNULL(s.qty, 0)) as suppliedQty, c.qty as demandQty
 from customerDemand c
@@ -8,14 +8,14 @@ from customerDemand c
 group by c.customer, c.item, c.qty
 order by c.customer, c.item;
 
--- Query 2
+-- Query 2: Done
 create view totalManufItems as
 select item as item, sum(qty) as totalManufQty
 from manufOrders
 group by item
 order by item;
 
--- Query 3
+-- Query 3: Done
 create view matsUsedVsShipped as
 select r.manuf, r.matItem, r.reqQty as requiredQty, IFNULL(sum(s.qty), 0) as shippedQty
 from (select m.manuf, b.matItem, sum(m.qty * b.QtyMatPerItem) as reqQty
@@ -27,7 +27,7 @@ from (select m.manuf, b.matItem, sum(m.qty * b.QtyMatPerItem) as reqQty
 group by r.manuf, r.matItem, r.reqQty
 order by r.manuf, r.matItem;
 
--- Query 4
+-- Query 4: Done
 create view producedVsShipped as
 select m.item, m.manuf, IFNULL(sum(s.qty), 0) as shippedOutQty, m.qty as orderedQty
 from manufOrders m
@@ -35,7 +35,7 @@ from manufOrders m
 group by m.item, m.manuf, m.qty
 order by m.item, m.manuf;
 
--- Query 5
+-- Query 5: Done
 create view suppliedVsShipped as
 select s.item, s.supplier, s.qty as suppliedQty, IFNULL(sum(s1.qty), 0) as shippedQty
 from supplyOrders s
@@ -77,17 +77,24 @@ order by s.item, s.supplier;
 #       from perShipperCost p3) t;
 
 
--- Query 10
-create view customersWithUnsatisfiedDemand as
-select c.customer as customer
+-- Query 10: DONE
+create view receivedQtyByCustomer as
+select c.customer, c.item, IFNULL(sum(s.qty), 0) as received
 from customerDemand c
-where c.item not in (select item
-                     from shipOrders s
-                     where c.customer = s.recipient)
-ORDER BY c.customer;
+         left join shipOrders s on s.recipient = c.customer and s.item = c.item
+group by c.customer, c.item;
+
+create view customersWithUnsatisfiedDemand as
+select distinct r.customer
+from receivedQtyByCustomer r,
+     customerDemand c
+where r.customer = c.customer
+  and r.item = c.item
+  and r.received < c.qty
+ORDER BY r.customer;
 
 
--- Query 11
+-- Query 11: Done
 create view suppliersWithUnsentOrders as
 select distinct s.supplier
 from supplyOrders s,
@@ -96,21 +103,35 @@ from supplyOrders s,
                left join shipOrders s2 on s2.sender = s1.supplier and s1.item = s2.item
       group by s1.supplier, s1.item) temp
 where s.supplier = temp.supplier
-    and s.item = temp.item
-    and s.qty > temp.sentQty
+  and s.item = temp.item
+  and s.qty > temp.sentQty
 order by s.supplier;
 
-
--- Query 12
-create view manufsWoutEnoughMats as
-select m.manuf as manuf
+-- Query 12: DONE
+create view neededQtyByManuf as
+select m.manuf, b.matItem, IFNULL(sum(m.qty * b.QtyMatPerItem), 0) as needed
 from manufOrders m,
-     shipOrders s
-where m.manuf = s.recipient
-  and m.qty < s.qty
-ORDER by m.manuf;
+     billOfMaterials b
+where m.item = b.prodItem
+group by m.manuf, b.matItem;
 
--- Query 13
+create view receivedQtyByManuf as
+select n.manuf, n.matItem, IFNULL(sum(distinct s.qty), 0) as received
+from neededQtyByManuf n
+         left join shipOrders s on s.item = n.matItem and s.recipient = n.manuf
+group by n.manuf, n.matItem;
+
+create view manufsWoutEnoughMats as
+select distinct n.manuf
+from neededQtyByManuf n,
+     receivedQtyByManuf r
+where n.manuf = r.manuf
+  and n.matItem = r.matItem
+  and n.needed > r.received
+ORDER by n.manuf;
+
+-- Query 13: Done
+-- similar to query 11
 create view manufsWithUnsentOrders as
 select distinct m.manuf
 from manufOrders m,

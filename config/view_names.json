@@ -6,6 +6,8 @@
     "producedVsShipped",
     "suppliedVsShipped",
     "suppliersWithUnsentOrders",
+    "manufsWoutEnoughMats",
+    "customersWithUnsatisfiedDemand",
     "manufsWithUnsentOrders"
   ]
 }
