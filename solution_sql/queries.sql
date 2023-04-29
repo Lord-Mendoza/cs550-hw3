@@ -43,17 +43,56 @@ from supplyOrders s
 group by s.item, s.supplier
 order by s.item, s.supplier;
 
--- Query 6
-# create view perSupplierCost as
-# 	select	__ as supplier, __ as cost
-# 	from
-# 		;
+-- Query 6: DONEEE
+-- similar to query 7
+create view totalSupplyCostPerSupplier as
+select o.supplier,
+       #supply base cost = prodPricePerUnit (ppu) times qty of supply item
+       IFNULL(sum(o.qty * u.ppu), 0) as supplyCost
+from supplyOrders o,
+     supplyUnitPricing u
+where o.supplier = u.supplier
+  and o.item = u.item
+group by o.supplier;
 
+create view perSupplierCost as
+select d.supplier,
+       IFNULL(
+           case
+               #discounted -- in excess of amt2 -- need to combine discount from amt1 and amt2 since separate
+               when s.supplyCost > d.amt2 then (
+                   #amt1 discount
+                   ((d.amt2 - d.amt1)             #cost difference between amt2 and amt1 to give disc1
+                       * (1 - d.disc1))           #discounted supply cost for what's covered in amt1
+                       + d.amt1)                  #add non-discounted cost for total
 
--- Query 7: DONEEE
+                   +
+
+                   #amt2 discount
+                   ((s.supplyCost - d.amt2)      #supplyCost cost excess of amt2
+                        * (1 - d.disc2)          #discounted supply cost for what's covered in amt2
+               )
+
+               #discounted -- within amt1 and amt2 -- only apply amt1 discount
+               when s.supplyCost > d.amt1 and s.supplyCost < d.amt2 then (
+                   #amt1 discount
+                   ((s.supplyCost - d.amt1)      #supplyCost cost excess of amt1
+                       * (1 - d.disc1))          #discounted supply cost for what's covered in amt1
+                       + d.amt1                  #add non-discounted cost for total
+               )
+
+               #no discount
+               when s.supplyCost < d.amt1 then s.supplyCost
+           end
+       , 0) as cost
+from totalSupplyCostPerSupplier s
+         right join supplierDiscounts d on d.supplier = s.supplier
+order by d.supplier;
+
+-- Query 7: DONE
 create view totalManufacturingCostPerManufacturer as
 select o.manuf,
-       # 'manufacturer base cost = setUpCost + prodPricePerUnit time qty of produced prodItem'
+       # 'manufacturer base cost = setUpCost + prodPricePerUnit times qty of produced prodItem'
        IFNULL(sum(u.setUpCost + (u.prodCostPerUnit * o.qty)), 0) as manufacturingCost
 from manufOrders o,
      manufUnitPricing u

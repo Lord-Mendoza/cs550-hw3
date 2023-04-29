@@ -9,6 +9,7 @@
     "manufsWoutEnoughMats",
     "customersWithUnsatisfiedDemand",
     "manufsWithUnsentOrders",
-    "perManufCost"
+    "perManufCost",
+    "perSupplierCost"
   ]
 }
