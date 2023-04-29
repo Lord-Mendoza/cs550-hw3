@@ -118,7 +118,6 @@ from totalManufacturingCostPerManufacturer t
          right join manufDiscounts d on d.manuf = t.manuf
 order by d.manuf;
 
-
 -- Query 8
 # create view perShipperCost as
 # 	select __ as shipper, __ as cost
@@ -126,7 +125,7 @@ order by d.manuf;
 # 		;
 
 
--- Query 9: TODO: Need to do query 6, 7, 8
+-- Query 9: TODO: Need to do query 8
 # create view totalCostBreakDown as
 # select t.supplyCost, t.manufCost, t.shippingCost, SUM(t.supplyCost + t.manufCost + t.shippingCost) as totalCost
 # from (select SUM(p1.cost) as supplyCost
@@ -154,7 +153,6 @@ where r.customer = c.customer
   and r.item = c.item
   and r.received < c.qty
 ORDER BY r.customer;
-
 
 -- Query 11: Done
 create view suppliersWithUnsentOrders as
