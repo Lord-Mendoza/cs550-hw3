@@ -118,25 +118,69 @@ from totalManufacturingCostPerManufacturer t
          right join manufDiscounts d on d.manuf = t.manuf
 order by d.manuf;
 
--- Query 8
-# create view perShipperCost as
-# 	select __ as shipper, __ as cost
-# 	from
-# 		;
+-- Query 8: DONEEE
+-- similar to query 6
+create view totalShippingCostPerToFromLocation as
+select s.shipper,
+       b1.shipLoc                                          as fromLocation,
+       b2.shipLoc                                          as toLocation,
+       IFNULL(sum(i.unitWeight * s.qty * p.pricePerLb), 0) as shippingCost
+from shipOrders s,
+     shippingPricing p,
+     items i,
+     busEntities b1,
+     busEntities b2
+where s.shipper = p.shipper
+  and s.item = i.item
+  and b1.entity = s.sender
+  and b2.entity = s.recipient
+  and b1.shipLoc = p.fromLoc
+  and b2.shipLoc = p.toLoc
+group by s.shipper, b1.shipLoc, b2.shipLoc;
 
+create view perShipperCost as
+select s.shipper,
+       #need to take 'maximum of s.minPackagePrice and the discounted price'
+       IFNULL(sum(greatest(
+          case
+              #discounted -- in excess of amt2 -- need to combine discount from amt1 and amt2 since separate
+              when t.shippingCost > s.amt2 then (
+                   #amt1 discount
+                   ((s.amt2 - s.amt1)             #cost difference between amt2 and amt1 to give disc1
+                       * (1 - s.disc1))           #discounted shipping cost for what's covered in amt1
+                       + s.amt1)                  #add non-discounted cost for total
 
--- Query 9: TODO: Need to do query 8
-# create view totalCostBreakDown as
-# select t.supplyCost, t.manufCost, t.shippingCost, SUM(t.supplyCost + t.manufCost + t.shippingCost) as totalCost
-# from (select SUM(p1.cost) as supplyCost
-#       from perSupplierCost p1
-#       UNION
-#       select SUM(p2.cost) as manufCost
-#       from perManufCost p2
-#       UNION
-#       select SUM(p3.cost) as shippingCost
-#       from perShipperCost p3) t;
+                   +
 
+                   #amt2 discount
+                   ((t.shippingCost - s.amt2)      #shipping cost excess of amt2
+                        * (1 - s.disc2)            #discounted shipping cost for what's covered in amt2
+              )
+
+              #discounted -- within amt1 and amt2 -- only apply amt1 discount
+              when t.shippingCost > s.amt1 and t.shippingCost < s.amt2 then (
+                   #amt1 discount
+                   ((t.shippingCost - s.amt1)      #supplyCost cost excess of amt1
+                      * (1 - s.disc1))           #discounted supply cost for what's covered in amt1
+                      + s.amt1                   #add non-discounted cost for total
+              )
+
+              #no discount
+              when t.shippingCost < s.amt1 then t.shippingCost
+          end, s.minPackagePrice))
+       , 0) as cost
+from totalShippingCostPerToFromLocation t
+            right join shippingPricing s on s.shipper = t.shipper and s.fromLoc = t.fromLocation and s.toLoc = t.toLocation
+group by s.shipper
+order by s.shipper;
+
+-- Query 9:
+-- combines query 6, 7, 8 to get total cost breakdown
+create view totalCostBreakDown as
+select sp.cost as supplyCost, m.cost as manufCost, sh.cost as shippingCost, (sp.cost + m.cost + sh.cost) as totalCost
+from (select sum(cost) as cost from perSupplierCost) sp,
+     (select sum(cost) as cost from perManufCost) m,
+     (select sum(cost) as cost from perShipperCost) sh;
 
 -- Query 10: DONE
 create view receivedQtyByCustomer as

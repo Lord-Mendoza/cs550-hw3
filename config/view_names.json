@@ -10,6 +10,8 @@
     "customersWithUnsatisfiedDemand",
     "manufsWithUnsentOrders",
     "perManufCost",
-    "perSupplierCost"
+    "perSupplierCost",
+    "perShipperCost",
+    "totalCostBreakDown"
   ]
 }
