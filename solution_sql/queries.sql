@@ -1,3 +1,6 @@
+-- Lord Mendoza - G00841164
+-- CS 550 - DB Project - Part 2
+
 -- Query 1: Done
 create view shippedVSCustDemand as
 select c.customer as customer, c.item as item, sum(IFNULL(s.qty, 0)) as suppliedQty, c.qty as demandQty
